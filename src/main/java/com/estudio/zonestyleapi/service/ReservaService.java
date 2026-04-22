@@ -1,6 +1,6 @@
 package com.estudio.zonestyleapi.service;
 
-import com.estudio.zonestyleapi.model.Reserva;
+import com.estudio.zonestyleapi.model.Reserva; // Asegúrate que sea Reserva
 import com.estudio.zonestyleapi.repository.ReservaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

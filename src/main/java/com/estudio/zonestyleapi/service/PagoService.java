@@ -1,6 +1,6 @@
 package com.estudio.zonestyleapi.service;
 
-import com.estudio.zonestyleapi.model.Pago;
+import com.estudio.zonestyleapi.model.Pago; // Asegúrate que sea Pago
 import com.estudio.zonestyleapi.repository.PagoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
