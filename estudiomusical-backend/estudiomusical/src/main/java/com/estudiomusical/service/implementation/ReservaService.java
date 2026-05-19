@@ -5,7 +5,9 @@ import com.estudiomusical.model.ReservaDetalle;
 import com.estudiomusical.repository.IReservaRepository;
 import com.estudiomusical.service.IReservaService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -28,6 +30,10 @@ public class ReservaService implements IReservaService {
 
     @Override
     public Reserva update(Reserva reserva, Integer id) throws Exception {
+        // Validamos existencia para que PUT no cree registros con IDs inexistentes.
+        if (!repo.existsById(id)) {
+            throw notFound(id);
+        }
         reserva.setIdReserva(id);
         // Enlazar cada detalle con su reserva padre antes de persistir
         if (reserva.getDetalles() != null) {
@@ -45,11 +51,18 @@ public class ReservaService implements IReservaService {
 
     @Override
     public Reserva findById(Integer id) throws Exception {
-        return repo.findById(id).orElse(new Reserva());
+        return repo.findById(id).orElseThrow(() -> notFound(id));
     }
 
     @Override
     public void delete(Integer id) throws Exception {
+        if (!repo.existsById(id)) {
+            throw notFound(id);
+        }
         repo.deleteById(id);
+    }
+
+    private ResponseStatusException notFound(Integer id) {
+        return new ResponseStatusException(HttpStatus.NOT_FOUND, "Reserva no encontrada: " + id);
     }
 }

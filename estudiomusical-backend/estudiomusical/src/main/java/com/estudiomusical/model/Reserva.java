@@ -1,5 +1,6 @@
 package com.estudiomusical.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -35,6 +36,8 @@ public class Reserva {
     @Column(nullable = false)
     private Double total;
 
+    // Evita recursion JSON al serializar Reserva -> detalles -> reserva.
+    @JsonManagedReference
     @OneToMany(mappedBy = "reserva", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ReservaDetalle> detalles;
 }

@@ -1,5 +1,6 @@
 package com.estudiomusical.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,6 +19,8 @@ public class ReservaDetalle {
     @EqualsAndHashCode.Include
     private Integer idReservaDetalle;
 
+    // Lado inverso de la relacion JSON para no serializar Reserva en bucle.
+    @JsonBackReference
     @ManyToOne
     @JoinColumn(name = "id_reserva", nullable = false, foreignKey = @ForeignKey(name = "FK_DETALLE_RESERVA"))
     private Reserva reserva;
