@@ -1,19 +1,24 @@
 package com.estudiomusical.service.implementation;
 
 import com.estudiomusical.model.Sala;
+import com.estudiomusical.repository.IGenericRepository;
 import com.estudiomusical.repository.ISalaRepository;
 import com.estudiomusical.service.ISalaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
-public class SalaService implements ISalaService {
-
+public class SalaService extends GenericService<Sala, Integer> implements ISalaService {
+    // Autowired
     private final ISalaRepository repo;
 
+    @Override
+    protected IGenericRepository<Sala, Integer> getRepo() {
+        return repo;
+    }
+
+    /*
     @Override
     public Sala save(Sala sala) throws Exception {
         return repo.save(sala);
@@ -21,6 +26,8 @@ public class SalaService implements ISalaService {
 
     @Override
     public Sala update(Sala sala, Integer id) throws Exception {
+        // EVALUAR CON EL ID
+        // API REFLECTION
         sala.setIdSala(id);
         return repo.save(sala);
     }
@@ -39,4 +46,6 @@ public class SalaService implements ISalaService {
     public void delete(Integer id) throws Exception {
         repo.deleteById(id);
     }
+
+     */
 }

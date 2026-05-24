@@ -1,7 +1,6 @@
 package com.estudiomusical.repository;
 
 import com.estudiomusical.model.Cliente;
-import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface IClienteRepository extends JpaRepository<Cliente, Integer> {
+public interface IClienteRepository extends IGenericRepository<Cliente, Integer> {
 }

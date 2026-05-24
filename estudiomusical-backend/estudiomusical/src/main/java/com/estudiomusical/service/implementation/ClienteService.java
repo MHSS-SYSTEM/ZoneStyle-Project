@@ -2,18 +2,23 @@ package com.estudiomusical.service.implementation;
 
 import com.estudiomusical.model.Cliente;
 import com.estudiomusical.repository.IClienteRepository;
+import com.estudiomusical.repository.IGenericRepository;
 import com.estudiomusical.service.IClienteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
-public class ClienteService implements IClienteService {
-
+public class ClienteService extends GenericService<Cliente, Integer> implements IClienteService {
+    // Autowired
     private final IClienteRepository repo;
 
+    @Override
+    protected IGenericRepository<Cliente, Integer> getRepo() {
+        return repo;
+    }
+
+    /*
     @Override
     public Cliente save(Cliente cliente) throws Exception {
         return repo.save(cliente);
@@ -21,6 +26,8 @@ public class ClienteService implements IClienteService {
 
     @Override
     public Cliente update(Cliente cliente, Integer id) throws Exception {
+        // EVALUAR CON EL ID
+        // API REFLECTION
         cliente.setIdCliente(id);
         return repo.save(cliente);
     }
@@ -39,4 +46,6 @@ public class ClienteService implements IClienteService {
     public void delete(Integer id) throws Exception {
         repo.deleteById(id);
     }
+
+     */
 }
