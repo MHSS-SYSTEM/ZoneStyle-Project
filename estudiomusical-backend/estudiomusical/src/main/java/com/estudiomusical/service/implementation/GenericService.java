@@ -1,5 +1,6 @@
 package com.estudiomusical.service.implementation;
 
+import com.estudiomusical.exception.ModelNotFoundException;
 import com.estudiomusical.repository.IGenericRepository;
 import com.estudiomusical.service.IGenericService;
 
@@ -16,6 +17,7 @@ public abstract class GenericService<T,ID> implements IGenericService<T,ID> {
 
     @Override
     public T update(T t, ID id) throws Exception {
+        // Validar por ID
         return getRepo().save(t);
     }
 
@@ -24,10 +26,9 @@ public abstract class GenericService<T,ID> implements IGenericService<T,ID> {
         return getRepo().findAll();
     }
 
-    // CAMBIO AQUÍ: Retorna null si no encuentra el ID, evitando usar la excepción por ahora
     @Override
     public T findById(ID id) throws Exception {
-        return getRepo().findById(id).orElse(null);
+        return getRepo().findById(id).orElseThrow(() -> new ModelNotFoundException("ID NOT FOUND: " + id));
     }
 
     @Override
