@@ -5,9 +5,14 @@ import com.estudiomusical.model.Sala;
 import com.estudiomusical.service.ISalaService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 import java.net.URI;
 import java.util.List;
@@ -30,10 +35,19 @@ public class SalaController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<SalaDTO> findById(@PathVariable Integer id) throws Exception {
+    public ResponseEntity<EntityModel<SalaDTO>> findById(@PathVariable Integer id) throws Exception {
         Sala obj = service.findById(id);
         SalaDTO dto = modelMapper.map(obj, SalaDTO.class);
-        return ResponseEntity.ok(dto);
+
+        EntityModel<SalaDTO> resource = EntityModel.of(dto);
+
+        WebMvcLinkBuilder linkToSelf = linkTo(methodOn(this.getClass()).findById(id));
+        resource.add(linkToSelf.withSelfRel());
+
+        WebMvcLinkBuilder linkToAll = linkTo(methodOn(this.getClass()).findAll());
+        resource.add(linkToAll.withRel("all-salas"));
+
+        return ResponseEntity.ok(resource);
     }
 
     @PostMapping

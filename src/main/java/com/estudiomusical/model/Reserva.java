@@ -7,6 +7,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Data
@@ -32,9 +33,35 @@ public class Reserva {
     @Column(nullable = false)
     private LocalDateTime fecha;
 
+    @Column
+    private LocalTime horaInicio;
+
+    @Column
+    private LocalTime horaFin;
+
     @Column(nullable = false)
     private Double total;
 
+    @Column(nullable = false)
+    private Double abono;
+
+    @Column(nullable = false)
+    private Double saldo;
+
+    @Column(length = 50)
+    private String metodoPago;
+
+    @Column(length = 30)
+    private String estado;
+
     @OneToMany(mappedBy = "reserva", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ReservaDetalle> detalles;
+
+    @ManyToMany
+    @JoinTable(
+            name = "reserva_equipo",
+            joinColumns = @JoinColumn(name = "id_reserva", referencedColumnName = "idReserva"),
+            inverseJoinColumns = @JoinColumn(name = "id_equipo", referencedColumnName = "idEquipo")
+    )
+    private List<Equipo> equipos;
 }
