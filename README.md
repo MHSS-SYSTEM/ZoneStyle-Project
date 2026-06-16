@@ -61,3 +61,7 @@ El backend acepta estas variables de entorno:
 - `JWT_SECRET`
 
 En Docker Compose ya estan configuradas.
+
+## Nota sobre el primer build
+
+La primera ejecucion puede tardar varios minutos porque Docker descarga imagenes de MariaDB, Java/Maven y Node. Si el navegador muestra que `localhost:4000` rechazo la conexion, normalmente significa que el frontend aun se esta construyendo. Espere a que el servicio `frontend` quede en ejecucion y luego recargue la pagina.
