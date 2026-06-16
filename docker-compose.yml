@@ -1,0 +1,50 @@
+services:
+  db:
+    image: mariadb:11.4
+    container_name: estudiomusical-db
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: estudiomusicaldb
+      MARIADB_ROOT_PASSWORD: root
+    ports:
+      - "3307:3306"
+    volumes:
+      - estudiomusical_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: estudiomusical-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mariadb://db:3306/estudiomusicaldb
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      JWT_SECRET: estudiomusical-secret-key-2026-segura
+    ports:
+      - "9090:9090"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: estudiomusical-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      PORT: 4000
+    ports:
+      - "4000:4000"
+
+volumes:
+  estudiomusical_db_data:

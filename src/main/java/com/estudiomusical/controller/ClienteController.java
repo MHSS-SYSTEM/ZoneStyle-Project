@@ -3,6 +3,7 @@ package com.estudiomusical.controller;
 import com.estudiomusical.dto.ClienteDTO;
 import com.estudiomusical.model.Cliente;
 import com.estudiomusical.service.IClienteService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.hateoas.EntityModel;
@@ -54,7 +55,7 @@ public class ClienteController {
     }
 
     @PostMapping
-    public ResponseEntity<Void> save(@RequestBody ClienteDTO dto) throws Exception {
+    public ResponseEntity<Void> save(@Valid @RequestBody ClienteDTO dto) throws Exception {
         Cliente cliente = modelMapper.map(dto, Cliente.class);
         Cliente obj = service.save(cliente);
 
@@ -65,7 +66,7 @@ public class ClienteController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ClienteDTO> update(@PathVariable Integer id, @RequestBody ClienteDTO dto) throws Exception {
+    public ResponseEntity<ClienteDTO> update(@PathVariable Integer id, @Valid @RequestBody ClienteDTO dto) throws Exception {
         Cliente cliente = modelMapper.map(dto, Cliente.class);
         Cliente obj = service.update(cliente, id);
         ClienteDTO resultDto = modelMapper.map(obj, ClienteDTO.class);

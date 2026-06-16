@@ -3,6 +3,7 @@ package com.estudiomusical.controller;
 import com.estudiomusical.dto.PagoDTO;
 import com.estudiomusical.model.Pago;
 import com.estudiomusical.service.IPagoService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.hateoas.EntityModel;
@@ -59,7 +60,7 @@ public class PagoController {
     }
 
     @PostMapping
-    public ResponseEntity<Void> save(@RequestBody PagoDTO dto) throws Exception {
+    public ResponseEntity<Void> save(@Valid @RequestBody PagoDTO dto) throws Exception {
         Pago pago = modelMapper.map(dto, Pago.class);
         Pago obj = service.save(pago);
 
@@ -70,14 +71,14 @@ public class PagoController {
     }
 
     @PostMapping("/reserva/{idReserva}")
-    public ResponseEntity<PagoDTO> registrarPagoReserva(@PathVariable Integer idReserva, @RequestBody PagoDTO dto) throws Exception {
+    public ResponseEntity<PagoDTO> registrarPagoReserva(@PathVariable Integer idReserva, @Valid @RequestBody PagoDTO dto) throws Exception {
         Pago pago = modelMapper.map(dto, Pago.class);
         Pago obj = service.registrarPagoReserva(idReserva, pago);
         return ResponseEntity.ok(modelMapper.map(obj, PagoDTO.class));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<PagoDTO> update(@PathVariable Integer id, @RequestBody PagoDTO dto) throws Exception {
+    public ResponseEntity<PagoDTO> update(@PathVariable Integer id, @Valid @RequestBody PagoDTO dto) throws Exception {
         Pago pago = modelMapper.map(dto, Pago.class);
         Pago obj = service.update(pago, id);
         PagoDTO resultDto = modelMapper.map(obj, PagoDTO.class);

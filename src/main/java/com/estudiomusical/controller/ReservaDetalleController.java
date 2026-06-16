@@ -3,6 +3,7 @@ package com.estudiomusical.controller;
 import com.estudiomusical.dto.ReservaDetalleDTO;
 import com.estudiomusical.model.ReservaDetalle;
 import com.estudiomusical.service.IReservaDetalleService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.hateoas.EntityModel;
@@ -51,7 +52,7 @@ public class ReservaDetalleController {
     }
 
     @PostMapping
-    public ResponseEntity<Void> save(@RequestBody ReservaDetalleDTO dto) throws Exception {
+    public ResponseEntity<Void> save(@Valid @RequestBody ReservaDetalleDTO dto) throws Exception {
         ReservaDetalle reservaDetalle = modelMapper.map(dto, ReservaDetalle.class);
         ReservaDetalle obj = service.save(reservaDetalle);
 
@@ -62,7 +63,7 @@ public class ReservaDetalleController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ReservaDetalleDTO> update(@PathVariable Integer id, @RequestBody ReservaDetalleDTO dto) throws Exception {
+    public ResponseEntity<ReservaDetalleDTO> update(@PathVariable Integer id, @Valid @RequestBody ReservaDetalleDTO dto) throws Exception {
         ReservaDetalle reservaDetalle = modelMapper.map(dto, ReservaDetalle.class);
         ReservaDetalle obj = service.update(reservaDetalle, id);
         ReservaDetalleDTO resultDto = modelMapper.map(obj, ReservaDetalleDTO.class);

@@ -3,6 +3,7 @@ package com.estudiomusical.controller;
 import com.estudiomusical.dto.ReservaDTO;
 import com.estudiomusical.model.Reserva;
 import com.estudiomusical.service.IReservaService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.hateoas.EntityModel;
@@ -105,7 +106,7 @@ public class ReservaController {
     }
 
     @PostMapping
-    public ResponseEntity<Void> save(@RequestBody ReservaDTO dto) throws Exception {
+    public ResponseEntity<Void> save(@Valid @RequestBody ReservaDTO dto) throws Exception {
         Reserva reserva = modelMapper.map(dto, Reserva.class);
         
         // Asignar bidireccionalmente la relación reserva en los detalles
@@ -122,7 +123,7 @@ public class ReservaController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ReservaDTO> update(@PathVariable Integer id, @RequestBody ReservaDTO dto) throws Exception {
+    public ResponseEntity<ReservaDTO> update(@PathVariable Integer id, @Valid @RequestBody ReservaDTO dto) throws Exception {
         Reserva reserva = modelMapper.map(dto, Reserva.class);
         
         // Asignar bidireccionalmente la relación reserva en los detalles
