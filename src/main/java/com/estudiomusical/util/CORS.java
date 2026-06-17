@@ -8,10 +8,15 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.Set;
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class CORS implements Filter {
+    private static final Set<String> ALLOWED_ORIGINS = Set.of(
+            "http://localhost:4000",
+            "http://localhost:4200"
+    );
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
@@ -22,8 +27,12 @@ public class CORS implements Filter {
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
         HttpServletResponse response = (HttpServletResponse) res;
         HttpServletRequest request = (HttpServletRequest) req;
+        String origin = request.getHeader("Origin");
 
-        response.setHeader("Access-Control-Allow-Origin", "http://localhost:4200");
+        if (ALLOWED_ORIGINS.contains(origin)) {
+            response.setHeader("Access-Control-Allow-Origin", origin);
+        }
+
         response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
         response.setHeader("Access-Control-Max-Age", "3600");
         response.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Content-Length, X-Requested-With");

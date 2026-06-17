@@ -20,7 +20,7 @@ public class JwtUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = repo.findOneByUsername(username);
+        User user = repo.findOneByUsername(resolveUsername(username));
 
         if (user == null) {
             throw new UsernameNotFoundException("User not found: " + username);
@@ -38,5 +38,18 @@ public class JwtUserDetailsService implements UserDetailsService {
                 true,
                 roles
         );
+    }
+
+    private String resolveUsername(String username) {
+        if (username == null) {
+            return "";
+        }
+
+        return switch (username.trim().toLowerCase()) {
+            case "admin" -> "admin@zonestyle.com";
+            case "ingeniero" -> "ingeniero@zonestyle.com";
+            case "cliente" -> "cliente@zonestyle.com";
+            default -> username.trim();
+        };
     }
 }

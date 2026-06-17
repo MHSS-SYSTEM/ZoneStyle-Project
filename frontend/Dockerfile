@@ -1,8 +1,12 @@
 FROM node:22-alpine
 WORKDIR /app
 
+ENV NPM_CONFIG_CACHE=/tmp/.npm
+
 COPY package*.json ./
-RUN npm install --legacy-peer-deps --no-audit --no-fund
+RUN npm install -g npm@11.12.1 \
+    && npm cache clean --force \
+    && npm ci --legacy-peer-deps --no-audit --no-fund
 
 COPY . .
 RUN npm run build
