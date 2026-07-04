@@ -138,7 +138,13 @@
       </table>
     </div>
 
-    <mat-paginator [pageSizeOptions]="[5, 10, 25]" showFirstLastButtons></mat-paginator>
+    <mat-paginator
+      [pageSizeOptions]="[5, 10, 25]"
+      [length]="totalElements()"
+      [pageSize]="pageRequest().size"
+      (page)="changePage($event)"
+      showFirstLastButtons>
+    </mat-paginator>
 
   </div>
 

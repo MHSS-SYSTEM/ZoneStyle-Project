@@ -1,6 +1,8 @@
 package com.estudiomusical.service;
 
 import com.estudiomusical.model.Reserva;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -22,4 +24,6 @@ public interface IReservaService extends IGenericService<Reserva, Integer> {
     Reserva cambiarEstado(Integer id, String estado) throws Exception;
 
     Reserva cancelar(Integer id) throws Exception;
+
+    Page<Reserva> listPage(Pageable pageable);
 }

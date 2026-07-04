@@ -5,6 +5,8 @@ import com.estudiomusical.repository.IGenericRepository;
 import com.estudiomusical.repository.IServicioRepository;
 import com.estudiomusical.service.IServicioService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -16,6 +18,11 @@ public class ServicioService extends GenericService<Servicio, Integer> implement
     @Override
     protected IGenericRepository<Servicio, Integer> getRepo() {
         return repo;
+    }
+
+    @Override
+    public Page<Servicio> listPage(Pageable pageable) {
+        return repo.findAll(pageable);
     }
 
     /*

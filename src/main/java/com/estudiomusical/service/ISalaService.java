@@ -1,13 +1,10 @@
 package com.estudiomusical.service;
 
 import com.estudiomusical.model.Sala;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface ISalaService extends IGenericService<Sala, Integer> {
-    /*Sala save(Sala sala) throws  Exception;
-    Sala update(Sala sala, Integer id) throws  Exception;
-    List<Sala> findAll() throws  Exception;
-    Sala findById(Integer id) throws  Exception;
-    void delete(Integer id) throws  Exception;*/
+
+    Page<Sala> listPage(Pageable pageable);
 }

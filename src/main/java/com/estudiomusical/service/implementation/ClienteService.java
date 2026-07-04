@@ -5,17 +5,25 @@ import com.estudiomusical.repository.IClienteRepository;
 import com.estudiomusical.repository.IGenericRepository;
 import com.estudiomusical.service.IClienteService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class ClienteService extends GenericService<Cliente, Integer> implements IClienteService {
+
     // Autowired
     private final IClienteRepository repo;
 
     @Override
     protected IGenericRepository<Cliente, Integer> getRepo() {
         return repo;
+    }
+
+    @Override
+    public Page<Cliente> listPage(Pageable pageable) {
+        return repo.findAll(pageable);
     }
 
     /*
@@ -46,6 +54,5 @@ public class ClienteService extends GenericService<Cliente, Integer> implements 
     public void delete(Integer id) throws Exception {
         repo.deleteById(id);
     }
-
-     */
+    */
 }

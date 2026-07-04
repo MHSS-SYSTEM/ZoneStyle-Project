@@ -1,4 +1,5 @@
-import { Component, effect, inject, signal, untracked, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { switchMap, tap } from 'rxjs';
@@ -31,64 +32,109 @@ import { ClienteService } from '../../services/cliente.service';
   styleUrl: './cliente.component.css',
 })
 export class ClienteComponent {
-  displayedColumns: string[] = ['idCliente', 'nombre', 'telefono', 'email', 'acciones'];
+
+  displayedColumns: string[] = [
+    'idCliente',
+    'nombre',
+    'telefono',
+    'email',
+    'acciones'
+  ];
 
   dataSource = signal(new MatTableDataSource<Cliente>());
-  paginator = viewChild(MatPaginator);
 
-  cliente: Cliente = new Cliente();
-  isEditing = false;
+  pageRequest = signal({
+    page: 0,
+    size: 10
+  });
 
   private readonly clienteService = inject(ClienteService);
   private readonly snackBar = inject(MatSnackBar);
 
   clientes$ = this.clienteService.$listChange;
 
+  private readonly response = toSignal(
+    toObservable(this.pageRequest).pipe(
+      switchMap(({ page, size }) =>
+        this.clienteService.listPageable(page, size)
+      ),
+      tap(data => this.clienteService.setListChange(data.content))
+    )
+  );
+
+  totalElements = computed(
+    () => this.response()?.page?.totalElements ?? 0
+  );
+
+  cliente: Cliente = new Cliente();
+  isEditing = false;
+
   constructor() {
-    this.clienteService.findAll().subscribe({
-      next: data => this.clienteService.setListChange(data),
-      error: () => this.mostrarError('No se pudo cargar la lista de clientes'),
-    });
 
     effect(() => {
       const list = this.clientes$();
-      const p = this.paginator();
       const ds = this.dataSource();
 
       ds.data = list;
-      ds.paginator = p ?? null;
     });
 
     effect(() => {
       const message = this.clienteService.$messageChange();
+
       if (message) {
-        this.snackBar.open(message, 'Cerrar', { duration: 3000 });
-        untracked(() => this.clienteService.setMessageChange(''));
+        this.snackBar.open(message, 'Cerrar', {
+          duration: 3000
+        });
+
+        untracked(() =>
+          this.clienteService.setMessageChange('')
+        );
       }
+    });
+
+  }
+
+  changePage(e: any): void {
+    this.pageRequest.set({
+      page: e.pageIndex,
+      size: e.pageSize
     });
   }
 
   guardar(): void {
+
     const request$ = this.isEditing
       ? this.clienteService.update(this.cliente.idCliente, this.cliente)
       : this.clienteService.save(this.cliente);
+
     const successMessage = this.isEditing
       ? 'Cliente actualizado correctamente'
       : 'Cliente registrado correctamente';
+
     const errorMessage = this.isEditing
       ? 'No se pudo actualizar el cliente'
       : 'No se pudo registrar el cliente';
 
     request$
       .pipe(
-        switchMap(() => this.clienteService.findAll()),
-        tap(data => this.clienteService.setListChange(data)),
-        tap(() => this.clienteService.setMessageChange(successMessage))
+        switchMap(() =>
+          this.clienteService.listPageable(
+            this.pageRequest().page,
+            this.pageRequest().size
+          )
+        ),
+        tap(data =>
+          this.clienteService.setListChange(data.content)
+        ),
+        tap(() =>
+          this.clienteService.setMessageChange(successMessage)
+        )
       )
       .subscribe({
         next: () => this.limpiar(),
         error: () => this.mostrarError(errorMessage),
       });
+
   }
 
   editar(cliente: Cliente): void {
@@ -97,17 +143,35 @@ export class ClienteComponent {
   }
 
   eliminar(id: number): void {
+
     if (confirm('Esta seguro de eliminar este cliente?')) {
+
       this.clienteService.delete(id)
         .pipe(
-          switchMap(() => this.clienteService.findAll()),
-          tap(data => this.clienteService.setListChange(data)),
-          tap(() => this.clienteService.setMessageChange('Cliente eliminado correctamente'))
+          switchMap(() =>
+            this.clienteService.listPageable(
+              this.pageRequest().page,
+              this.pageRequest().size
+            )
+          ),
+          tap(data =>
+            this.clienteService.setListChange(data.content)
+          ),
+          tap(() =>
+            this.clienteService.setMessageChange(
+              'Cliente eliminado correctamente'
+            )
+          )
         )
         .subscribe({
-          error: () => this.mostrarError('No se pudo eliminar el cliente'),
+          error: () =>
+            this.mostrarError(
+              'No se pudo eliminar el cliente'
+            ),
         });
+
     }
+
   }
 
   limpiar(): void {
@@ -116,11 +180,21 @@ export class ClienteComponent {
   }
 
   applyFilter(event: Event): void {
+
     const filterValue = (event.target as HTMLInputElement).value;
-    this.dataSource().filter = filterValue.trim().toLowerCase();
+
+    this.dataSource().filter = filterValue
+      .trim()
+      .toLowerCase();
+
   }
 
   private mostrarError(message: string): void {
-    this.snackBar.open(message, 'Cerrar', { duration: 4000 });
+
+    this.snackBar.open(message, 'Cerrar', {
+      duration: 4000
+    });
+
   }
+
 }

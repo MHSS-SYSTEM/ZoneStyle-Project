@@ -7,6 +7,8 @@ import com.estudiomusical.repository.IEquipoRepository;
 import com.estudiomusical.repository.IReservaRepository;
 import com.estudiomusical.service.IEquipoService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -26,6 +28,11 @@ public class EquipoService extends GenericService<Equipo, Integer> implements IE
     @Override
     protected IGenericRepository<Equipo, Integer> getRepo() {
         return repo;
+    }
+
+    @Override
+    public Page<Equipo> listPage(Pageable pageable) {
+        return repo.findAll(pageable);
     }
 
     @Override

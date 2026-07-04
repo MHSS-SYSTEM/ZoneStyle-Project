@@ -5,6 +5,8 @@ import com.estudiomusical.repository.IGenericRepository;
 import com.estudiomusical.repository.ISalaRepository;
 import com.estudiomusical.service.ISalaService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -16,6 +18,11 @@ public class SalaService extends GenericService<Sala, Integer> implements ISalaS
     @Override
     protected IGenericRepository<Sala, Integer> getRepo() {
         return repo;
+    }
+
+    @Override
+    public Page<Sala> listPage(Pageable pageable) {
+        return repo.findAll(pageable);
     }
 
     /*

@@ -67,10 +67,10 @@
         {{ isEditing ? 'Actualizar' : 'Registrar' }}
       </button>
       @if (isEditing) {
-        <button mat-stroked-button type="button" (click)="limpiar()">
-          <mat-icon>cancel</mat-icon>
-          Cancelar
-        </button>
+      <button mat-stroked-button type="button" (click)="limpiar()">
+        <mat-icon>cancel</mat-icon>
+        Cancelar
+      </button>
       }
     </div>
   </form>
@@ -158,7 +158,13 @@
       </table>
     </div>
 
-    <mat-paginator [pageSizeOptions]="[5, 10, 25]" showFirstLastButtons></mat-paginator>
+    <mat-paginator
+      [pageSizeOptions]="[5, 10, 25]"
+      [length]="totalElements()"
+      [pageSize]="pageRequest().size"
+      (page)="changePage($event)"
+      showFirstLastButtons>
+    </mat-paginator>
 
   </div>
 

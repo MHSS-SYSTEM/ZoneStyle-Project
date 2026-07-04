@@ -10,6 +10,10 @@ import { GenericSignalService } from './generic-signal.service';
 export class EquipoService extends GenericSignalService<Equipo> {
   protected override url: string = `${environment.HOST}/equipos`;
 
+  listPageable(p: number, s: number) {
+    return this.http.get<any>(`${this.url}/pageable?page=${p}&size=${s}`);
+  }
+
   disponibles(fecha: string, horaInicio: string, horaFin: string) {
     const params = new HttpParams()
       .set('fecha', fecha)

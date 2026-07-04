@@ -6,6 +6,8 @@ import com.estudiomusical.service.IReservaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.ResponseEntity;
@@ -36,6 +38,13 @@ public class ReservaController {
                 .map(reserva -> modelMapper.map(reserva, ReservaDTO.class))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(list);
+    }
+
+    @GetMapping("/pageable")
+    public ResponseEntity<Page<ReservaDTO>> listPageable(Pageable pageable) throws Exception {
+        Page<Reserva> page = service.listPage(pageable);
+        Page<ReservaDTO> dtoPage = page.map(reserva -> modelMapper.map(reserva, ReservaDTO.class));
+        return ResponseEntity.ok(dtoPage);
     }
 
     @GetMapping("/{id}")
@@ -108,12 +117,12 @@ public class ReservaController {
     @PostMapping
     public ResponseEntity<Void> save(@Valid @RequestBody ReservaDTO dto) throws Exception {
         Reserva reserva = modelMapper.map(dto, Reserva.class);
-        
+
         // Asignar bidireccionalmente la relación reserva en los detalles
         if (reserva.getDetalles() != null) {
             reserva.getDetalles().forEach(detalle -> detalle.setReserva(reserva));
         }
-        
+
         Reserva obj = service.save(reserva);
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
@@ -125,7 +134,7 @@ public class ReservaController {
     @PutMapping("/{id}")
     public ResponseEntity<ReservaDTO> update(@PathVariable Integer id, @Valid @RequestBody ReservaDTO dto) throws Exception {
         Reserva reserva = modelMapper.map(dto, Reserva.class);
-        
+
         // Asignar bidireccionalmente la relación reserva en los detalles
         if (reserva.getDetalles() != null) {
             reserva.getDetalles().forEach(detalle -> detalle.setReserva(reserva));

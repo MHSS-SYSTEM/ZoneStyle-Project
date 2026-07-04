@@ -5,11 +5,9 @@
   </h1>
 
   <div class="transaccion-grid">
-    
-    <!-- COLUMNA IZQUIERDA: DATOS GENERALES, CALENDARIO Y PAGOS -->
+
     <div class="columna-izquierda">
-      
-      <!-- CARD DATOS GENERALES -->
+
       <div class="datos-generales-card form-card">
         <h2 class="form-titulo">
           <span class="material-icons">info</span>
@@ -48,13 +46,12 @@
         </div>
       </div>
 
-      <!-- CARD CALENDARIO INTERACTIVO -->
       <div class="calendario-card form-card">
         <h2 class="form-titulo">
           <span class="material-icons">calendar_today</span>
           Calendario de Disponibilidad
         </h2>
-        
+
         <mat-calendar [selected]="selectedDate" (selectedChange)="onDateChange($event)"></mat-calendar>
 
         <div class="fecha-seleccionada-display">
@@ -76,14 +73,12 @@
           </mat-form-field>
         </div>
 
-        <!-- Alerta de cruce de horario -->
         <div *ngIf="hasConflict()" class="alert-conflict">
           <span class="material-icons">error</span>
           <span>⚠️ Esta sala ya está reservada para esta fecha. Elige otra fecha o sala.</span>
         </div>
       </div>
 
-      <!-- CARD CONDICIONES DE PAGO -->
       <div class="pagos-card form-card">
         <h2 class="form-titulo">
           <span class="material-icons">monetization_on</span>
@@ -107,7 +102,6 @@
             <mat-icon matSuffix>payment</mat-icon>
           </mat-form-field>
 
-          <!-- Alerta de abono menor al 50% -->
           <div *ngIf="abonoInvalido()" class="alert-warning-abono">
             <span class="material-icons">warning</span>
             <span>Abono insuficiente. Debe pagar al menos S/ {{ ((reserva.total || 0) * 0.5) | number: '1.2-2' }} (50%).</span>
@@ -117,9 +111,8 @@
 
     </div>
 
-    <!-- COLUMNA DERECHA: AGREGAR DETALLES Y LISTADO TEMPORAL -->
     <div class="columna-derecha">
-      
+
       <div class="detalles-reserva-card form-card">
         <h2 class="form-titulo">
           <span class="material-icons">add_shopping_cart</span>
@@ -151,40 +144,38 @@
           </div>
         </div>
 
-        <!-- TABLA TEMPORAL DE DETALLES -->
         <div class="tabla-temporal-contenedor">
           <table class="tabla-temporal">
             <thead>
-              <tr>
-                <th>Servicio</th>
-                <th>Precio/Hora</th>
-                <th>Horas</th>
-                <th>Subtotal</th>
-                <th style="width: 80px; text-align: center;">Quitar</th>
-              </tr>
+            <tr>
+              <th>Servicio</th>
+              <th>Precio/Hora</th>
+              <th>Horas</th>
+              <th>Subtotal</th>
+              <th style="width: 80px; text-align: center;">Quitar</th>
+            </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let det of detalles(); let i = index">
-                <td>{{ det.servicio.nombre }}</td>
-                <td>S/ {{ det.servicio.precioPorHora | number: '1.2-2' }}</td>
-                <td>{{ det.cantidadHoras }}</td>
-                <td>S/ {{ det.subtotal | number: '1.2-2' }}</td>
-                <td style="text-align: center;">
-                  <button mat-icon-button color="warn" (click)="removerDetalle(i)">
-                    <mat-icon>remove_circle</mat-icon>
-                  </button>
-                </td>
-              </tr>
-              <tr *ngIf="detalles().length === 0">
-                <td colspan="5" class="tabla-vacia">
-                  No se han agregado servicios a esta reserva.
-                </td>
-              </tr>
+            <tr *ngFor="let det of detalles(); let i = index">
+              <td>{{ det.servicio.nombre }}</td>
+              <td>S/ {{ det.servicio.precioPorHora | number: '1.2-2' }}</td>
+              <td>{{ det.cantidadHoras }}</td>
+              <td>S/ {{ det.subtotal | number: '1.2-2' }}</td>
+              <td style="text-align: center;">
+                <button mat-icon-button color="warn" (click)="removerDetalle(i)">
+                  <mat-icon>remove_circle</mat-icon>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="detalles().length === 0">
+              <td colspan="5" class="tabla-vacia">
+                No se han agregado servicios a esta reserva.
+              </td>
+            </tr>
             </tbody>
           </table>
         </div>
 
-        <!-- SECCIÓN DE RESUMEN Y FINANZAS DE LA RESERVA -->
         <div class="reserva-resumen-seccion">
           <div class="resumen-item">
             <span class="resumen-label">Total Reserva:</span>
@@ -217,7 +208,6 @@
 
   </div>
 
-  <!-- SECCIÓN HISTORIAL DE RESERVAS -->
   <div class="tabla-card" style="margin-top: 24px;">
     <div class="tabla-header">
       <h2 class="form-titulo">
@@ -256,7 +246,7 @@
 
     <div class="tabla-contenedor">
       <table mat-table [dataSource]="dataSourceReserva()" class="tabla-completa mat-elevation-z2">
-        
+
         <ng-container matColumnDef="idReserva">
           <th mat-header-cell *matHeaderCellDef># Reserva</th>
           <td mat-cell *matCellDef="let row">{{ row.idReserva }}</td>
@@ -347,7 +337,13 @@
       </table>
     </div>
 
-    <mat-paginator [pageSizeOptions]="[5, 10, 25]" showFirstLastButtons></mat-paginator>
+    <mat-paginator
+      [pageSizeOptions]="[5, 10, 25]"
+      [length]="totalElements()"
+      [pageSize]="pageRequest().size"
+      (page)="changePage($event)"
+      showFirstLastButtons>
+    </mat-paginator>
   </div>
 
   <div class="tabla-card" style="margin-top: 24px;">

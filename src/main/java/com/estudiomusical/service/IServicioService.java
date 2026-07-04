@@ -1,13 +1,10 @@
 package com.estudiomusical.service;
 
 import com.estudiomusical.model.Servicio;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface IServicioService extends IGenericService<Servicio, Integer> {
-    /*Servicio save(Servicio servicio) throws  Exception;
-    Servicio update(Servicio servicio, Integer id) throws  Exception;
-    List<Servicio> findAll() throws  Exception;
-    Servicio findById(Integer id) throws  Exception;
-    void delete(Integer id) throws  Exception;*/
+
+    Page<Servicio> listPage(Pageable pageable);
 }

@@ -6,6 +6,8 @@ import com.estudiomusical.service.ISalaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +35,13 @@ public class SalaController {
                 .map(sala -> modelMapper.map(sala, SalaDTO.class))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(list);
+    }
+
+    @GetMapping("/pageable")
+    public ResponseEntity<Page<SalaDTO>> listPageable(Pageable pageable) throws Exception {
+        Page<Sala> page = service.listPage(pageable);
+        Page<SalaDTO> dtoPage = page.map(sala -> modelMapper.map(sala, SalaDTO.class));
+        return ResponseEntity.ok(dtoPage);
     }
 
     @GetMapping("/{id}")

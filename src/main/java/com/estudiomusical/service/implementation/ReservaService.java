@@ -8,6 +8,8 @@ import com.estudiomusical.repository.IReservaRepository;
 import com.estudiomusical.repository.IPagoRepository;
 import com.estudiomusical.service.IReservaService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +28,11 @@ public class ReservaService extends GenericService<Reserva, Integer> implements 
     @Override
     protected IGenericRepository<Reserva, Integer> getRepo() {
         return repo;
+    }
+
+    @Override
+    public Page<Reserva> listPage(Pageable pageable) {
+        return repo.findAll(pageable);
     }
 
     @Override

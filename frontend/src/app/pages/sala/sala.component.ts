@@ -1,10 +1,11 @@
-import { Component, effect, inject, signal, untracked, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { switchMap, tap } from 'rxjs';
 
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -36,29 +37,32 @@ export class SalaComponent {
   displayedColumns: string[] = ['idSala', 'nombre', 'estado', 'acciones'];
 
   dataSource = signal(new MatTableDataSource<Sala>());
-  paginator = viewChild(MatPaginator);
 
-  sala: Sala = new Sala();
-  isEditing = false;
+  // Paginación server-side
+  pageRequest = signal({ page: 0, size: 10 });
 
   private readonly salaService = inject(SalaService);
   private readonly snackBar = inject(MatSnackBar);
 
+  private readonly response = toSignal(
+    toObservable(this.pageRequest).pipe(
+      switchMap(({ page, size }) => this.salaService.listPageable(page, size)),
+      tap(data => this.salaService.setListChange(data.content))
+    )
+  );
+
+  totalElements = computed(() => this.response()?.page?.totalElements ?? 0);
+
+  sala: Sala = new Sala();
+  isEditing = false;
+
   salas$ = this.salaService.$listChange;
 
   constructor() {
-    this.salaService.findAll().subscribe({
-      next: data => this.salaService.setListChange(data),
-      error: () => this.mostrarError('No se pudo cargar la lista de salas'),
-    });
-
     effect(() => {
       const list = this.salas$();
-      const p = this.paginator();
       const ds = this.dataSource();
-
       ds.data = list;
-      ds.paginator = p ?? null;
     });
 
     effect(() => {
@@ -68,6 +72,10 @@ export class SalaComponent {
         untracked(() => this.salaService.setMessageChange(''));
       }
     });
+  }
+
+  changePage(e: any): void {
+    this.pageRequest.set({ page: e.pageIndex, size: e.pageSize });
   }
 
   guardar(): void {
@@ -83,8 +91,8 @@ export class SalaComponent {
 
     request$
       .pipe(
-        switchMap(() => this.salaService.findAll()),
-        tap(data => this.salaService.setListChange(data)),
+        switchMap(() => this.salaService.listPageable(this.pageRequest().page, this.pageRequest().size)),
+        tap(data => this.salaService.setListChange(data.content)),
         tap(() => this.salaService.setMessageChange(successMessage))
       )
       .subscribe({
@@ -102,8 +110,8 @@ export class SalaComponent {
     if (confirm('Esta seguro de eliminar esta sala?')) {
       this.salaService.delete(id)
         .pipe(
-          switchMap(() => this.salaService.findAll()),
-          tap(data => this.salaService.setListChange(data)),
+          switchMap(() => this.salaService.listPageable(this.pageRequest().page, this.pageRequest().size)),
+          tap(data => this.salaService.setListChange(data.content)),
           tap(() => this.salaService.setMessageChange('Sala eliminada correctamente'))
         )
         .subscribe({

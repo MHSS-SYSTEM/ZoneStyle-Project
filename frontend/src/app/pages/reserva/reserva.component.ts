@@ -1,10 +1,11 @@
-import { Component, effect, inject, signal, untracked, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { switchMap, tap } from 'rxjs';
 
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -55,8 +56,18 @@ import { PagoService } from '../../services/pago.service';
 export class ReservaComponent {
   displayedColumnsReserva: string[] = ['idReserva', 'cliente', 'sala', 'fecha', 'horario', 'equipos', 'estado', 'total', 'abono', 'saldo', 'metodoPago', 'acciones'];
   displayedColumnsPago: string[] = ['fechaPago', 'monto', 'metodoPago', 'tipoPago'];
+
   dataSourceReserva = signal(new MatTableDataSource<Reserva>());
-  paginatorReserva = viewChild(MatPaginator);
+
+  // Paginación server-side
+  pageRequest = signal({ page: 0, size: 10 });
+  private readonly response = toSignal(
+    toObservable(this.pageRequest).pipe(
+      switchMap(({ page, size }) => this.reservaService.listPageable(page, size)),
+      tap(data => this.reservaService.setListChange(data.content))
+    )
+  );
+  totalElements = computed(() => this.response()?.page?.totalElements ?? 0);
 
   clientes = signal<Cliente[]>([]);
   salas = signal<Sala[]>([]);
@@ -96,15 +107,11 @@ export class ReservaComponent {
 
     this.cargarCatalogos();
     this.cargarEquiposDisponibles();
-    this.cargarReservas();
 
     effect(() => {
       const list = this.reservas$();
-      const p = this.paginatorReserva();
       const ds = this.dataSourceReserva();
-
       ds.data = list;
-      ds.paginator = p ?? null;
     });
 
     effect(() => {
@@ -114,6 +121,10 @@ export class ReservaComponent {
         untracked(() => this.reservaService.setMessageChange(''));
       }
     });
+  }
+
+  changePage(e: any): void {
+    this.pageRequest.set({ page: e.pageIndex, size: e.pageSize });
   }
 
   compareObjects(o1: any, o2: any): boolean {
@@ -152,24 +163,6 @@ export class ReservaComponent {
       this.hasConflict.set(false);
       return;
     }
-
-    const selectedDay = this.reserva.fecha.split('T')[0];
-    const selectedSalaId = this.reserva.sala.idSala;
-    const selectedStart = this.timeToMinutes(this.reserva.horaInicio || '10:00');
-    const selectedEnd = this.timeToMinutes(this.reserva.horaFin || '11:00');
-
-    const conflictExist = this.reservas$().some(res => {
-      if (!res.fecha || !res.sala || !res.sala.idSala) return false;
-      if (res.idReserva === this.reserva.idReserva) return false;
-
-      const resDay = res.fecha.split('T')[0];
-      const resStart = this.timeToMinutes(res.horaInicio || res.fecha.split('T')[1]?.substring(0, 5) || '10:00');
-      const resEnd = this.timeToMinutes(res.horaFin || this.addHours(res.horaInicio || '10:00', 1));
-      const overlap = selectedStart < resEnd && selectedEnd > resStart;
-      return resDay === selectedDay && res.sala.idSala === selectedSalaId && overlap;
-    });
-
-    this.hasConflict.set(conflictExist);
     this.validarDisponibilidadBackend();
   }
 
@@ -257,8 +250,8 @@ export class ReservaComponent {
 
     this.reservaService.save(this.reserva)
       .pipe(
-        switchMap(() => this.reservaService.findAll()),
-        tap(data => this.reservaService.setListChange(data)),
+        switchMap(() => this.reservaService.listPageable(this.pageRequest().page, this.pageRequest().size)),
+        tap(data => this.reservaService.setListChange(data.content)),
         tap(() => this.reservaService.setMessageChange('Reserva registrada correctamente'))
       )
       .subscribe({
@@ -289,8 +282,8 @@ export class ReservaComponent {
     this.pagoParcial.tipoPago = 'PAGO_PARCIAL';
     this.pagoService.registrarPagoReserva(this.reservaPagoId, this.pagoParcial)
       .pipe(
-        switchMap(() => this.reservaService.findAll()),
-        tap(data => this.reservaService.setListChange(data)),
+        switchMap(() => this.reservaService.listPageable(this.pageRequest().page, this.pageRequest().size)),
+        tap(data => this.reservaService.setListChange(data.content)),
         tap(() => this.cargarPagos(this.reservaPagoId!)),
         tap(() => this.reservaService.setMessageChange('Pago registrado correctamente'))
       )
@@ -322,8 +315,8 @@ export class ReservaComponent {
     if (confirm('Deseas cancelar esta reserva sin borrar su historial?')) {
       this.reservaService.cancelar(id)
         .pipe(
-          switchMap(() => this.reservaService.findAll()),
-          tap(data => this.reservaService.setListChange(data)),
+          switchMap(() => this.reservaService.listPageable(this.pageRequest().page, this.pageRequest().size)),
+          tap(data => this.reservaService.setListChange(data.content)),
           tap(() => this.reservaService.setMessageChange('Reserva cancelada correctamente'))
         )
         .subscribe({
@@ -342,8 +335,8 @@ export class ReservaComponent {
     if (confirm('Esta seguro de eliminar esta reserva?')) {
       this.reservaService.delete(id)
         .pipe(
-          switchMap(() => this.reservaService.findAll()),
-          tap(data => this.reservaService.setListChange(data)),
+          switchMap(() => this.reservaService.listPageable(this.pageRequest().page, this.pageRequest().size)),
+          tap(data => this.reservaService.setListChange(data.content)),
           tap(() => this.reservaService.setMessageChange('Reserva eliminada correctamente'))
         )
         .subscribe({
@@ -389,13 +382,6 @@ export class ReservaComponent {
     this.servicioService.findAll().subscribe({
       next: data => this.servicios.set(data),
       error: () => this.mostrarError('No se pudo cargar servicios'),
-    });
-  }
-
-  private cargarReservas(): void {
-    this.reservaService.findAll().subscribe({
-      next: data => this.reservaService.setListChange(data),
-      error: () => this.mostrarError('No se pudo cargar el historial de reservas'),
     });
   }
 

@@ -6,6 +6,8 @@ import com.estudiomusical.service.IClienteService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +37,13 @@ public class ClienteController {
         return ResponseEntity.ok(list);
     }
 
+    @GetMapping("/pageable")
+    public ResponseEntity<Page<ClienteDTO>> listPageable(Pageable pageable) throws Exception {
+        Page<Cliente> page = service.listPage(pageable);
+        Page<ClienteDTO> dtoPage = page.map(cliente -> modelMapper.map(cliente, ClienteDTO.class));
+        return ResponseEntity.ok(dtoPage);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<EntityModel<ClienteDTO>> findById(@PathVariable Integer id) throws Exception {
         Cliente obj = service.findById(id);
@@ -42,12 +51,12 @@ public class ClienteController {
 
         // HATEOAS (Nivel 3)
         EntityModel<ClienteDTO> resource = EntityModel.of(dto);
-        
+
         // Link al recurso individual (Self link)
         WebMvcLinkBuilder linkToSelf = linkTo(methodOn(this.getClass()).findById(id));
         resource.add(linkToSelf.withSelfRel());
 
-        // Link al recurso coleccion (All clients link)
+        // Link al recurso colección (All clients link)
         WebMvcLinkBuilder linkToAll = linkTo(methodOn(this.getClass()).findAll());
         resource.add(linkToAll.withRel("all-clients"));
 
@@ -78,4 +87,5 @@ public class ClienteController {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }
+
 }

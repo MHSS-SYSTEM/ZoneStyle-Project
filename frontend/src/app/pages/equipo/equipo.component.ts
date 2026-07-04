@@ -1,10 +1,11 @@
-import { Component, effect, inject, signal, untracked, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { switchMap, tap } from 'rxjs';
 
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -36,31 +37,34 @@ export class EquipoComponent {
   displayedColumns: string[] = ['idEquipo', 'nombre', 'marca', 'modelo', 'estado', 'acciones'];
 
   dataSource = signal(new MatTableDataSource<Equipo>());
-  paginator = viewChild(MatPaginator);
 
-  equipo: Equipo = new Equipo();
-  isEditing = false;
+  // Paginación server-side
+  pageRequest = signal({ page: 0, size: 10 });
 
   private readonly equipoService = inject(EquipoService);
   private readonly snackBar = inject(MatSnackBar);
+
+  private readonly response = toSignal(
+    toObservable(this.pageRequest).pipe(
+      switchMap(({ page, size }) => this.equipoService.listPageable(page, size)),
+      tap(data => this.equipoService.setListChange(data.content))
+    )
+  );
+
+  totalElements = computed(() => this.response()?.page?.totalElements ?? 0);
+
+  equipo: Equipo = new Equipo();
+  isEditing = false;
 
   equipos$ = this.equipoService.$listChange;
 
   constructor() {
     this.limpiar();
 
-    this.equipoService.findAll().subscribe({
-      next: data => this.equipoService.setListChange(data),
-      error: () => this.mostrarError('No se pudo cargar la lista de equipos'),
-    });
-
     effect(() => {
       const list = this.equipos$();
-      const p = this.paginator();
       const ds = this.dataSource();
-
       ds.data = list;
-      ds.paginator = p ?? null;
     });
 
     effect(() => {
@@ -70,6 +74,10 @@ export class EquipoComponent {
         untracked(() => this.equipoService.setMessageChange(''));
       }
     });
+  }
+
+  changePage(e: any): void {
+    this.pageRequest.set({ page: e.pageIndex, size: e.pageSize });
   }
 
   guardar(): void {
@@ -85,8 +93,8 @@ export class EquipoComponent {
 
     request$
       .pipe(
-        switchMap(() => this.equipoService.findAll()),
-        tap(data => this.equipoService.setListChange(data)),
+        switchMap(() => this.equipoService.listPageable(this.pageRequest().page, this.pageRequest().size)),
+        tap(data => this.equipoService.setListChange(data.content)),
         tap(() => this.equipoService.setMessageChange(successMessage))
       )
       .subscribe({
@@ -104,8 +112,8 @@ export class EquipoComponent {
     if (confirm('Esta seguro de eliminar este equipo tecnico?')) {
       this.equipoService.delete(id)
         .pipe(
-          switchMap(() => this.equipoService.findAll()),
-          tap(data => this.equipoService.setListChange(data)),
+          switchMap(() => this.equipoService.listPageable(this.pageRequest().page, this.pageRequest().size)),
+          tap(data => this.equipoService.setListChange(data.content)),
           tap(() => this.equipoService.setMessageChange('Equipo eliminado correctamente'))
         )
         .subscribe({

@@ -1,10 +1,11 @@
-import { Component, effect, inject, signal, untracked, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { switchMap, tap } from 'rxjs';
 
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -34,29 +35,32 @@ export class ServicioComponent {
   displayedColumns: string[] = ['idServicio', 'nombre', 'precioPorHora', 'acciones'];
 
   dataSource = signal(new MatTableDataSource<Servicio>());
-  paginator = viewChild(MatPaginator);
 
-  servicio: Servicio = new Servicio();
-  isEditing = false;
+  // Paginación server-side
+  pageRequest = signal({ page: 0, size: 10 });
 
   private readonly servicioService = inject(ServicioService);
   private readonly snackBar = inject(MatSnackBar);
 
+  private readonly response = toSignal(
+    toObservable(this.pageRequest).pipe(
+      switchMap(({ page, size }) => this.servicioService.listPageable(page, size)),
+      tap(data => this.servicioService.setListChange(data.content))
+    )
+  );
+
+  totalElements = computed(() => this.response()?.page?.totalElements ?? 0);
+
+  servicio: Servicio = new Servicio();
+  isEditing = false;
+
   servicios$ = this.servicioService.$listChange;
 
   constructor() {
-    this.servicioService.findAll().subscribe({
-      next: data => this.servicioService.setListChange(data),
-      error: () => this.mostrarError('No se pudo cargar la lista de servicios'),
-    });
-
     effect(() => {
       const list = this.servicios$();
-      const p = this.paginator();
       const ds = this.dataSource();
-
       ds.data = list;
-      ds.paginator = p ?? null;
     });
 
     effect(() => {
@@ -66,6 +70,10 @@ export class ServicioComponent {
         untracked(() => this.servicioService.setMessageChange(''));
       }
     });
+  }
+
+  changePage(e: any): void {
+    this.pageRequest.set({ page: e.pageIndex, size: e.pageSize });
   }
 
   guardar(): void {
@@ -81,8 +89,8 @@ export class ServicioComponent {
 
     request$
       .pipe(
-        switchMap(() => this.servicioService.findAll()),
-        tap(data => this.servicioService.setListChange(data)),
+        switchMap(() => this.servicioService.listPageable(this.pageRequest().page, this.pageRequest().size)),
+        tap(data => this.servicioService.setListChange(data.content)),
         tap(() => this.servicioService.setMessageChange(successMessage))
       )
       .subscribe({
@@ -100,8 +108,8 @@ export class ServicioComponent {
     if (confirm('Esta seguro de eliminar este servicio?')) {
       this.servicioService.delete(id)
         .pipe(
-          switchMap(() => this.servicioService.findAll()),
-          tap(data => this.servicioService.setListChange(data)),
+          switchMap(() => this.servicioService.listPageable(this.pageRequest().page, this.pageRequest().size)),
+          tap(data => this.servicioService.setListChange(data.content)),
           tap(() => this.servicioService.setMessageChange('Servicio eliminado correctamente'))
         )
         .subscribe({
