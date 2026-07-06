@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -56,6 +57,12 @@ public class WebSecurityConfig {
                         .requestMatchers("/login").permitAll()
                         .requestMatchers("/reportes/**").hasAuthority("ADMIN")
                         .requestMatchers("/pagos/**").hasAnyAuthority("ADMIN", "INGENIERO")
+                        // CLIENTE puede leer salas, servicios, equipos y clientes para el formulario de reservas
+                        .requestMatchers(HttpMethod.GET, "/clientes/**").hasAnyAuthority("ADMIN", "INGENIERO", "CLIENTE")
+                        .requestMatchers(HttpMethod.GET, "/salas/**").hasAnyAuthority("ADMIN", "INGENIERO", "CLIENTE")
+                        .requestMatchers(HttpMethod.GET, "/servicios/**").hasAnyAuthority("ADMIN", "INGENIERO", "CLIENTE")
+                        .requestMatchers(HttpMethod.GET, "/equipos/**").hasAnyAuthority("ADMIN", "INGENIERO", "CLIENTE")
+                        // Escritura solo ADMIN e INGENIERO
                         .requestMatchers("/clientes/**").hasAnyAuthority("ADMIN", "INGENIERO")
                         .requestMatchers("/salas/**").hasAnyAuthority("ADMIN", "INGENIERO")
                         .requestMatchers("/servicios/**").hasAnyAuthority("ADMIN", "INGENIERO")
