@@ -42,7 +42,7 @@ export class LoginComponent {
     this.isLoggingIn.set(true);
     this.loginError.set(false);
 
-    const username = this.loginForm.value.username ?? '';
+    const username = (this.loginForm.value.username ?? '').trim();
     const password = this.loginForm.value.password ?? '';
 
     this.loginService.login(username, password).subscribe({

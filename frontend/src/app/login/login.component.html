@@ -29,7 +29,7 @@
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Usuario o correo</mat-label>
           <mat-icon matPrefix>person</mat-icon>
-          <input matInput formControlName="username" autocomplete="username" placeholder="admin@zonestyle.com">
+          <input matInput formControlName="username" autocomplete="username" placeholder="admin o admin@zonestyle.com">
           @if (loginForm.get('username')?.hasError('required')) {
             <mat-error>Ingrese su usuario o correo</mat-error>
           }
