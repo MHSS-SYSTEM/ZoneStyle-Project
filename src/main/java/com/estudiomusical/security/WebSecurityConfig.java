@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -56,11 +57,21 @@ public class WebSecurityConfig {
                         .requestMatchers("/login").permitAll()
                         .requestMatchers("/reportes/**").hasAuthority("ADMIN")
                         .requestMatchers("/pagos/**").hasAnyAuthority("ADMIN", "INGENIERO")
+                        // CLIENTE puede leer salas, servicios, equipos y clientes (para el formulario de reservas)
+                        .requestMatchers(HttpMethod.GET, "/clientes/**").hasAnyAuthority("ADMIN", "INGENIERO", "CLIENTE")
+                        .requestMatchers(HttpMethod.GET, "/salas/**").hasAnyAuthority("ADMIN", "INGENIERO", "CLIENTE")
+                        .requestMatchers(HttpMethod.GET, "/servicios/**").hasAnyAuthority("ADMIN", "INGENIERO", "CLIENTE")
+                        .requestMatchers(HttpMethod.GET, "/equipos/**").hasAnyAuthority("ADMIN", "INGENIERO", "CLIENTE")
+                        // Escritura solo ADMIN e INGENIERO
                         .requestMatchers("/clientes/**").hasAnyAuthority("ADMIN", "INGENIERO")
                         .requestMatchers("/salas/**").hasAnyAuthority("ADMIN", "INGENIERO")
                         .requestMatchers("/servicios/**").hasAnyAuthority("ADMIN", "INGENIERO")
                         .requestMatchers("/equipos/**").hasAnyAuthority("ADMIN", "INGENIERO")
-                        .requestMatchers("/reservas/**").hasAnyAuthority("ADMIN", "INGENIERO", "CLIENTE")
+                        // El CLIENTE solo puede ver SUS reservas y crear una reserva (a su nombre)
+                        .requestMatchers(HttpMethod.GET, "/reservas/mias").hasAnyAuthority("ADMIN", "INGENIERO", "CLIENTE")
+                        .requestMatchers(HttpMethod.POST, "/reservas").hasAnyAuthority("ADMIN", "INGENIERO", "CLIENTE")
+                        // El resto de operaciones de reservas (ver todas, editar, cancelar, eliminar) es solo staff
+                        .requestMatchers("/reservas/**").hasAnyAuthority("ADMIN", "INGENIERO")
                         .requestMatchers("/menus/**").hasAnyAuthority("ADMIN", "INGENIERO", "CLIENTE")
                         .anyRequest().authenticated()
                 )

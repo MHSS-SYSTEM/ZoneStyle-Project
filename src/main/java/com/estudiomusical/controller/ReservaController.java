@@ -1,7 +1,9 @@
 package com.estudiomusical.controller;
 
 import com.estudiomusical.dto.ReservaDTO;
+import com.estudiomusical.model.Cliente;
 import com.estudiomusical.model.Reserva;
+import com.estudiomusical.service.IClienteService;
 import com.estudiomusical.service.IReservaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -9,7 +11,12 @@ import org.modelmapper.ModelMapper;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
@@ -28,6 +35,7 @@ import java.util.stream.Collectors;
 public class ReservaController {
 
     private final IReservaService service;
+    private final IClienteService clienteService;
     private final ModelMapper modelMapper;
 
     @GetMapping
@@ -36,6 +44,44 @@ public class ReservaController {
                 .map(reserva -> modelMapper.map(reserva, ReservaDTO.class))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(list);
+    }
+
+    // Devuelve solo las reservas del cliente autenticado (rol CLIENTE).
+    // Se identifica al cliente por el email = username del token JWT.
+    @GetMapping("/mias")
+    public ResponseEntity<List<ReservaDTO>> findMias() throws Exception {
+        Cliente cliente = clienteActual();
+        if (cliente == null) {
+            return ResponseEntity.ok(List.of());
+        }
+        List<ReservaDTO> list = service.findByCliente(cliente.getIdCliente()).stream()
+                .map(reserva -> modelMapper.map(reserva, ReservaDTO.class))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(list);
+    }
+
+    // Cliente vinculado al usuario autenticado (por coincidencia de email), o null.
+    private Cliente clienteActual() throws Exception {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) {
+            return null;
+        }
+        return clienteService.findByEmail(auth.getName());
+    }
+
+    // true si el usuario tiene el rol CLIENTE y no es ADMIN ni INGENIERO.
+    private boolean esSoloCliente() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) {
+            return false;
+        }
+        boolean cliente = false, staff = false;
+        for (GrantedAuthority ga : auth.getAuthorities()) {
+            String rol = ga.getAuthority();
+            if ("CLIENTE".equals(rol)) cliente = true;
+            if ("ADMIN".equals(rol) || "INGENIERO".equals(rol)) staff = true;
+        }
+        return cliente && !staff;
     }
 
     @GetMapping("/{id}")
@@ -108,12 +154,23 @@ public class ReservaController {
     @PostMapping
     public ResponseEntity<Void> save(@Valid @RequestBody ReservaDTO dto) throws Exception {
         Reserva reserva = modelMapper.map(dto, Reserva.class);
-        
+
+        // Si quien reserva es un CLIENTE, la reserva se registra obligatoriamente a su nombre,
+        // ignorando cualquier cliente enviado en el cuerpo (no puede reservar por otros).
+        if (esSoloCliente()) {
+            Cliente propio = clienteActual();
+            if (propio == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Tu usuario no esta vinculado a una ficha de cliente. Contacta al administrador.");
+            }
+            reserva.setCliente(propio);
+        }
+
         // Asignar bidireccionalmente la relación reserva en los detalles
         if (reserva.getDetalles() != null) {
             reserva.getDetalles().forEach(detalle -> detalle.setReserva(reserva));
         }
-        
+
         Reserva obj = service.save(reserva);
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")

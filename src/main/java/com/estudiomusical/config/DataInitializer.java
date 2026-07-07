@@ -1,8 +1,10 @@
 package com.estudiomusical.config;
 
+import com.estudiomusical.model.Cliente;
 import com.estudiomusical.model.Menu;
 import com.estudiomusical.model.Role;
 import com.estudiomusical.model.User;
+import com.estudiomusical.repository.IClienteRepository;
 import com.estudiomusical.repository.IMenuRepository;
 import com.estudiomusical.repository.IRoleRepository;
 import com.estudiomusical.repository.IUserRepository;
@@ -20,6 +22,7 @@ public class DataInitializer implements CommandLineRunner {
     private final IRoleRepository roleRepository;
     private final IUserRepository userRepository;
     private final IMenuRepository menuRepository;
+    private final IClienteRepository clienteRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -38,6 +41,19 @@ public class DataInitializer implements CommandLineRunner {
         saveMenu(1004, "event", "Reservas", "/pages/reservas", List.of(admin, ingeniero, cliente));
         saveMenu(1005, "mic", "Equipos Tecnicos", "/pages/equipos", List.of(admin, ingeniero));
         saveMenu(1006, "dashboard", "Reportes", "/pages/reportes", List.of(admin));
+
+        // Ficha de cliente vinculada al usuario CLIENTE de prueba (mismo email).
+        // Permite que, al iniciar sesion como cliente@zonestyle.com, el sistema
+        // reconozca su ficha y muestre unicamente SUS reservas.
+        saveCliente("Cliente Demo Zona Style", "999000111", "cliente@zonestyle.com");
+    }
+
+    private void saveCliente(String nombre, String telefono, String email) {
+        Cliente cliente = clienteRepository.findByEmail(email).orElseGet(Cliente::new);
+        cliente.setNombre(nombre);
+        cliente.setTelefono(telefono);
+        cliente.setEmail(email);
+        clienteRepository.save(cliente);
     }
 
     private Role saveRole(Integer id, String name, String description) {

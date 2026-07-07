@@ -8,4 +8,9 @@ import { GenericSignalService } from './generic-signal.service';
 })
 export class ClienteService extends GenericSignalService<Cliente> {
   protected override url: string = `${environment.HOST}/clientes`;
+
+  // Ficha del cliente vinculado al usuario autenticado (por email).
+  me() {
+    return this.http.get<Cliente>(`${this.url}/me`);
+  }
 }

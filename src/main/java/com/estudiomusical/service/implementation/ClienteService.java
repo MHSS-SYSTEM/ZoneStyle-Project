@@ -18,6 +18,14 @@ public class ClienteService extends GenericService<Cliente, Integer> implements 
         return repo;
     }
 
+    @Override
+    public Cliente findByEmail(String email) throws Exception {
+        if (email == null) {
+            return null;
+        }
+        return repo.findByEmail(email).orElse(null);
+    }
+
     /*
     @Override
     public Cliente save(Cliente cliente) throws Exception {

@@ -9,6 +9,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -33,6 +35,18 @@ public class ClienteController {
                 .map(cliente -> modelMapper.map(cliente, ClienteDTO.class))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(list);
+    }
+
+    // Ficha del cliente vinculado al usuario autenticado (por email = username del token).
+    // Devuelve 204 si el usuario no tiene una ficha de cliente asociada.
+    @GetMapping("/me")
+    public ResponseEntity<ClienteDTO> me() throws Exception {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Cliente cliente = (auth != null) ? service.findByEmail(auth.getName()) : null;
+        if (cliente == null) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(modelMapper.map(cliente, ClienteDTO.class));
     }
 
     @GetMapping("/{id}")

@@ -26,6 +26,7 @@ import { Pago } from '../../model/pago';
 
 import { ReservaService } from '../../services/reserva.service';
 import { ClienteService } from '../../services/cliente.service';
+import { LoginService } from '../../services/login.service';
 import { SalaService } from '../../services/sala.service';
 import { ServicioService } from '../../services/servicio.service';
 import { EquipoService } from '../../services/equipo.service';
@@ -54,6 +55,10 @@ import { PagoService } from '../../services/pago.service';
 })
 export class ReservaComponent {
   displayedColumnsReserva: string[] = ['idReserva', 'cliente', 'sala', 'fecha', 'horario', 'equipos', 'estado', 'total', 'abono', 'saldo', 'metodoPago', 'acciones'];
+
+  // Rol CLIENTE: solo ve y registra SUS propias reservas
+  esCliente = false;
+  private miCliente: Cliente | null = null;
   displayedColumnsPago: string[] = ['fechaPago', 'monto', 'metodoPago', 'tipoPago'];
   dataSourceReserva = signal(new MatTableDataSource<Reserva>());
   paginatorReserva = viewChild(MatPaginator);
@@ -85,16 +90,25 @@ export class ReservaComponent {
   private readonly servicioService = inject(ServicioService);
   private readonly equipoService = inject(EquipoService);
   private readonly pagoService = inject(PagoService);
+  private readonly loginService = inject(LoginService);
   private readonly snackBar = inject(MatSnackBar);
 
   reservas$ = this.reservaService.$listChange;
 
   constructor() {
+    const roles = this.loginService.getRoles();
+    this.esCliente = roles.includes('CLIENTE') && !roles.includes('ADMIN') && !roles.includes('INGENIERO');
+    if (this.esCliente) {
+      // El cliente no ve la columna de cliente (todas son suyas) ni las acciones de gestion
+      this.displayedColumnsReserva = ['idReserva', 'sala', 'fecha', 'horario', 'equipos', 'estado', 'total', 'abono', 'saldo', 'metodoPago'];
+    }
+
     this.limpiar();
     this.filtroInicio = this.toInputDate(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
     this.filtroFin = this.toInputDate(new Date());
 
     this.cargarCatalogos();
+    this.cargarClienteAutenticado();
     this.cargarEquiposDisponibles();
     this.cargarReservas();
 
@@ -257,7 +271,7 @@ export class ReservaComponent {
 
     this.reservaService.save(this.reserva)
       .pipe(
-        switchMap(() => this.reservaService.findAll()),
+        switchMap(() => this.recargar()),
         tap(data => this.reservaService.setListChange(data)),
         tap(() => this.reservaService.setMessageChange('Reserva registrada correctamente'))
       )
@@ -289,7 +303,7 @@ export class ReservaComponent {
     this.pagoParcial.tipoPago = 'PAGO_PARCIAL';
     this.pagoService.registrarPagoReserva(this.reservaPagoId, this.pagoParcial)
       .pipe(
-        switchMap(() => this.reservaService.findAll()),
+        switchMap(() => this.recargar()),
         tap(data => this.reservaService.setListChange(data)),
         tap(() => this.cargarPagos(this.reservaPagoId!)),
         tap(() => this.reservaService.setMessageChange('Pago registrado correctamente'))
@@ -322,7 +336,7 @@ export class ReservaComponent {
     if (confirm('Deseas cancelar esta reserva sin borrar su historial?')) {
       this.reservaService.cancelar(id)
         .pipe(
-          switchMap(() => this.reservaService.findAll()),
+          switchMap(() => this.recargar()),
           tap(data => this.reservaService.setListChange(data)),
           tap(() => this.reservaService.setMessageChange('Reserva cancelada correctamente'))
         )
@@ -342,7 +356,7 @@ export class ReservaComponent {
     if (confirm('Esta seguro de eliminar esta reserva?')) {
       this.reservaService.delete(id)
         .pipe(
-          switchMap(() => this.reservaService.findAll()),
+          switchMap(() => this.recargar()),
           tap(data => this.reservaService.setListChange(data)),
           tap(() => this.reservaService.setMessageChange('Reserva eliminada correctamente'))
         )
@@ -375,13 +389,20 @@ export class ReservaComponent {
 
     this.hasConflict.set(false);
     this.abonoInvalido.set(false);
+
+    // El cliente siempre reserva a su propio nombre
+    if (this.esCliente && this.miCliente) {
+      this.reserva.cliente = this.miCliente;
+    }
   }
 
   private cargarCatalogos(): void {
-    this.clienteService.findAll().subscribe({
-      next: data => this.clientes.set(data),
-      error: () => this.mostrarError('No se pudo cargar clientes'),
-    });
+    if (!this.esCliente) {
+      this.clienteService.findAll().subscribe({
+        next: data => this.clientes.set(data),
+        error: () => this.mostrarError('No se pudo cargar clientes'),
+      });
+    }
     this.salaService.findAll().subscribe({
       next: data => this.salas.set(data.filter(s => s.estado)),
       error: () => this.mostrarError('No se pudo cargar salas'),
@@ -393,9 +414,30 @@ export class ReservaComponent {
   }
 
   private cargarReservas(): void {
-    this.reservaService.findAll().subscribe({
+    this.recargar().subscribe({
       next: data => this.reservaService.setListChange(data),
       error: () => this.mostrarError('No se pudo cargar el historial de reservas'),
+    });
+  }
+
+  // Devuelve la fuente de reservas correcta segun el rol: el cliente solo las suyas.
+  private recargar() {
+    return this.esCliente ? this.reservaService.findMias() : this.reservaService.findAll();
+  }
+
+  // Carga la ficha del cliente autenticado para asignarla automaticamente a sus reservas.
+  private cargarClienteAutenticado(): void {
+    if (!this.esCliente) {
+      return;
+    }
+    this.clienteService.me().subscribe({
+      next: cliente => {
+        if (cliente && cliente.idCliente) {
+          this.miCliente = cliente;
+          this.reserva.cliente = cliente;
+        }
+      },
+      error: () => { /* si no tiene ficha vinculada, el backend lo indicara al guardar */ },
     });
   }
 

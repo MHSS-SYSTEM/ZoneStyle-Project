@@ -19,6 +19,11 @@ export class ReservaService extends GenericSignalService<Reserva> {
     return this.http.get<Reserva[]>(`${this.url}/cliente/${idCliente}`);
   }
 
+  // Solo las reservas del cliente autenticado (rol CLIENTE).
+  findMias() {
+    return this.http.get<Reserva[]>(`${this.url}/mias`);
+  }
+
   findBySala(idSala: number) {
     return this.http.get<Reserva[]>(`${this.url}/sala/${idSala}`);
   }

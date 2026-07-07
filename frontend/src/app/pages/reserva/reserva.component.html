@@ -16,13 +16,19 @@
           Información General
         </h2>
         <div class="form-grid-vertical">
-          <mat-form-field appearance="outline" class="campo">
+          <mat-form-field appearance="outline" class="campo" *ngIf="!esCliente">
             <mat-label>Cliente</mat-label>
             <mat-select name="cliente" [(ngModel)]="reserva.cliente" [compareWith]="compareObjects">
               <mat-option *ngFor="let cli of clientes()" [value]="cli">
                 {{ cli.nombre }}
               </mat-option>
             </mat-select>
+            <mat-icon matSuffix>person</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="campo" *ngIf="esCliente">
+            <mat-label>Cliente</mat-label>
+            <input matInput [value]="reserva.cliente?.nombre || 'Mi cuenta'" readonly />
             <mat-icon matSuffix>person</mat-icon>
           </mat-form-field>
 
@@ -226,7 +232,7 @@
       </h2>
     </div>
 
-    <div class="detalle-formulario-grid">
+    <div class="detalle-formulario-grid" *ngIf="!esCliente">
       <mat-form-field appearance="outline" class="campo">
         <mat-label>Desde</mat-label>
         <input matInput type="date" [(ngModel)]="filtroInicio" />
@@ -350,7 +356,7 @@
     <mat-paginator [pageSizeOptions]="[5, 10, 25]" showFirstLastButtons></mat-paginator>
   </div>
 
-  <div class="tabla-card" style="margin-top: 24px;">
+  <div class="tabla-card" style="margin-top: 24px;" *ngIf="!esCliente">
     <div class="tabla-header">
       <h2 class="form-titulo">
         <span class="material-icons">payments</span>
