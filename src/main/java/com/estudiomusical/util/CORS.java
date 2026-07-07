@@ -29,7 +29,9 @@ public class CORS implements Filter {
         HttpServletRequest request = (HttpServletRequest) req;
         String origin = request.getHeader("Origin");
 
-        if (ALLOWED_ORIGINS.contains(origin)) {
+        // origin puede ser null (peticiones sin cabecera Origin, p.ej. server-to-server o curl);
+        // Set.of(...).contains(null) lanzaria NullPointerException, por eso se valida antes.
+        if (origin != null && ALLOWED_ORIGINS.contains(origin)) {
             response.setHeader("Access-Control-Allow-Origin", origin);
         }
 
